@@ -1,0 +1,45 @@
+import json
+import requests
+from web3 import Web3
+import pandas as pd
+
+class BlockScan:
+    def __init__(self, infura_url: str):
+        self.web3 = Web3(Web3.HTTPProvider(infura_url))
+        if not self.web3.isConnected():
+            raise ConnectionError("Unable to connect to the Ethereum network.")
+    
+    def get_block_details(self, block_number: int) -> dict:
+        block = self.web3.eth.getBlock(block_number, full_transactions=True)
+        return dict(block)
+
+    def get_transaction_details(self, tx_hash: str) -> dict:
+        tx = self.web3.eth.getTransaction(tx_hash)
+        receipt = self.web3.eth.getTransactionReceipt(tx_hash)
+        return {
+            'transaction': dict(tx),
+            'receipt': dict(receipt)
+        }
+
+    def get_address_details(self, address: str) -> dict:
+        address = Web3.toChecksumAddress(address)
+        balance = self.web3.eth.getBalance(address)
+        transactions = self.get_address_transactions(address)
+        return {
+            'address': address,
+            'balance': self.web3.fromWei(balance, 'ether'),
+            'transactions': transactions
+        }
+
+    def get_address_transactions(self, address: str) -> pd.DataFrame:
+        # Placeholder for fetching address transactions, as this typically requires an external service.
+        # Etherscan API can be used here to fetch transactions for an address.
+        ETHERSCAN_API_KEY = 'YOUR_ETHERSCAN_API_KEY'
+        ETHERSCAN_URL = f"https://api.etherscan.io/api?module=account&action=txlist&address={address}&startblock=0&endblock=99999999&sort=asc&apikey={ETHERSCAN_API_KEY}"
+        
+        response = requests.get(ETHERSCAN_URL)
+        data = response.json()
+        
+        if data['status'] == '1':
+            df = pd.DataFrame(data['result'])
+            df['value']
